@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -40,31 +41,44 @@ public class GoogleChromeActivity {
 
     @Test
     public void testGoogleChrome() {
+        List<String> expectedTasks = new ArrayList<>();
+        expectedTasks.add("Add tasks to list");
+        expectedTasks.add("Get number of tasks");
+        expectedTasks.add("Clear the list");
+
         //scroll till 'To-Do List' and click it
         driver.findElement(MobileBy.AndroidUIAutomator("UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView(\"To-Do List\")")).click();
 
         //wait until the To-Do List page loads
         wait.until(ExpectedConditions.visibilityOfElementLocated(MobileBy.xpath("//android.widget.TextView[contains(@text,'To-Do List')]")));
-        //initialize the task input field
-        MobileElement taskInput = driver.findElementByXPath("//android.widget.EditText[@resource-id='taskInput']");
-        //initialize Add task button
-        MobileElement addTask = driver.findElementByXPath("//android.widget.Button[contains(@text,'Add Task')]");
-        //enter task 1
-        taskInput.sendKeys("Add tasks to list");
-        addTask.click();
-        //enter task 2
-        taskInput.sendKeys("Get number of tasks");
-        addTask.click();
-        //enter task 3
-        taskInput.sendKeys("Clear the list");
-        addTask.click();
+
+        //click on "Clear List" button before adding task
+        driver.findElementByXPath("//android.widget.TextView[contains(@text,'Clear List')]").click();
+
+        //Add all the expected tasks
+        for(String taskName : expectedTasks) {
+            //enter task
+            driver.findElementByXPath("//android.widget.EditText[@resource-id='taskInput']").sendKeys(taskName);
+            //click on Add task button
+            driver.findElementByXPath("//android.widget.Button[contains(@text,'Add Task')]").click();
+        }
 
         //get the list of tasks
-        List<MobileElement> tasks = driver.findElementsByXPath("//android.view.View[@resource-id='tasksList']/android.view.View");
+        List<MobileElement> tasks = driver.findElementsByXPath("//android.view.View[@resource-id='tasksList']/android.view.View/android.widget.TextView");
+
+        //iterate through all tasks
+        for(MobileElement task : tasks) {
+            //get the task name
+            String taskName = task.getText();
+            //check if the task names matches with the tasks in 'expectedTask' list
+            Assert.assertTrue(expectedTasks.contains(taskName));
+        }
+
         //click on each task
         for(MobileElement task : tasks) {
             task.click();
         }
+
         //click on Clear List button
         driver.findElementByXPath("//android.widget.TextView[contains(@text,'Clear List')]").click();
 
